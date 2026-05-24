@@ -1,10 +1,11 @@
-// get_invoice_list.js
-// -------------------
-// Fetches all invoice IDs from Bokio's internal API and stores
-// them in window.__invoiceIds for use by download_pdfs.js.
+// get_invoice_list.js (browser fallback)
+// ----------------------------------------
+// FALLBACK — use download_via_api.ps1 instead.
+// Uses Bokio's undocumented internal browser API (window.bokioProxy).
+// Requires manual pasting into DevTools console (F12).
 //
 // Run order in browser console:
-//   1. config.js          (your company ID and date filter)
+//   1. config.js
 //   2. get_invoice_list.js
 //   3. download_pdfs.js
 
@@ -23,25 +24,26 @@ const result = await window.bokioProxy.Invoices.InvoiceController.All.Get(
 );
 
 // Uncomment to inspect the raw response if field names differ:
-// console.log(result.Model.Invoices[0]);
+// console.log(result.Data[0]);
 
-const all = result.Model.Invoices;
+const all = result.Data;
 
 window.__invoiceIds = all
   .filter(inv =>
-    inv.Status !== 'Draft' &&
+    inv.State !== 'Draft' &&
     inv.InvoiceDate >= fromDate &&
     (!toDate || inv.InvoiceDate <= toDate + 'T23:59:59')
   )
   .map(inv => ({
     id:       inv.Id,
-    nr:       inv.InvoiceNumber,
+    nr:       inv.InvoiceNumberWithPrefix,
     date:     inv.InvoiceDate.slice(0, 10),
     customer: inv.CustomerName,
-    status:   inv.Status
+    status:   inv.State
   }));
 
 const excluded = all.length - window.__invoiceIds.length;
 console.log(`Found ${window.__invoiceIds.length} invoices (${excluded} excluded: drafts or outside ${rangeLabel})`);
+console.log(`(${all.length} total in API response)`)
 console.table(window.__invoiceIds.slice(0, 5));
 console.log('Ready. Paste download_pdfs.js to start downloading.');
