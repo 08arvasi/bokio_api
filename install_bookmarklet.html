@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <title>Installera Bokio-bookmarklet</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 60px auto; padding: 0 20px; color: #333; }
+    h1 { font-size: 1.4em; }
+    .bm-link {
+      display: inline-block;
+      margin: 20px 0;
+      padding: 12px 20px;
+      background: #1a56db;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 1.1em;
+    }
+    .bm-link:hover { background: #1240a8; }
+    ol { line-height: 2; }
+    code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-size: 0.95em; }
+  </style>
+</head>
+<body>
+  <h1>📎 Bokio — Hämta faktura-PDF:er</h1>
+  <p>Dra knappen nedan till ditt bokmärkesfält för att installera:</p>
+
+  <a class="bm-link" href="javascript:(async()=>{const c='10bf9ac1-6e34-4b9d-8156-d2b8682245ee';const f=prompt('Fr%C3%A5n datum (%C3%85%C3%85%C3%85%C3%85-MM-DD):','2025-09-01');if(!f)return;const t=prompt('Till datum (%C3%85%C3%85%C3%85%C3%85-MM-DD, tomt=alla):','')%7C%7Cnull;const rl=t?`${f} - ${t}`:`fr%C3%A5n ${f}`;console.log(`H%C3%A4mtar fakturor ${rl}...`);const res=await window.bokioProxy.Invoices.InvoiceController.All.Get(c,{pageIndex:0,pageSize:500});const all=res.Model.Invoices;const inv=all.filter(i=>i.Status!=='Draft'%26%26i.InvoiceDate>=f%26%26(!t%7C%7Ci.InvoiceDate<=t+'T23:59:59')).map(i=>({id:i.Id,nr:i.InvoiceNumber,date:i.InvoiceDate.slice(0,10),customer:i.CustomerName}));console.log(`Hittade ${inv.length} fakturor`);if(!inv.length){console.warn('Inga fakturor.');return;}function s(x){return(x%7C%7C'').replace(/[^\w%C3%A5%C3%A4%C3%B6%C3%85%C3%84%C3%96\-]/g,'_').replace(/_{2,}/g,'_').slice(0,40).replace(/_$/,'');}const q=[...inv];const tot=q.length;let done=0,err=0;console.log(`Laddar ner ${tot}...`);while(q.length>0){const b=q.splice(0,2);const r=await Promise.allSettled(b.map(async i=>{const res=await fetch(`/Invoices/Invoice/LatestPdf/${i.id}`,{credentials:'include'});if(!res.ok)throw new Error(`HTTP ${res.status}`);const blob=await res.blob();const fn=`Faktura_${i.nr}_${i.date}_${s(i.customer)}.pdf`;const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fn;document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(a.href),1000);return fn;}));r.forEach((x,j)=>{if(x.status==='fulfilled'){done++;console.log(`[${done}/${tot}] OK ${x.value}`);}else{err++;console.error(`ERR ${b[j].nr}: ${x.reason}`);}});if(q.length>0)await new Promise(r=>setTimeout(r,300));}console.log(`Klart! ${done} ok, ${err} fel.`);})();">
+    📥 Bokio hämta fakturor
+  </a>
+
+  <ol>
+    <li>Visa bokmärkesfältet i Chrome: <code>Ctrl+Shift+B</code></li>
+    <li>Dra den blå knappen ovan till bokmärkesfältet</li>
+    <li>Gå till din Bokio-fakturasida och klicka på bokmärket</li>
+    <li>Ange datumintervall i dialogerna som dyker upp</li>
+  </ol>
+
+  <p><strong>Obs:</strong> Chrome-nedladdningsmappen måste vara inställd på rätt mapp innan du kör
+  (kör <code>set_chrome_prefs.py</code> med rätt sökväg).</p>
+</body>
+</html>
+">
