@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-set_chrome_prefs.py
--------------------
-Configures Chrome to save downloads directly to SAVE_DIR
-without showing a "Save As" dialog for each file.
+set_chrome_prefs.example.py
+----------------------------
+Copy this file to set_chrome_prefs.py and set SAVE_DIR to your target folder.
+set_chrome_prefs.py is gitignored — your local paths stay local.
 
-CLOSE CHROME COMPLETELY before running this script.
+CLOSE CHROME COMPLETELY before running.
 """
 
 import json

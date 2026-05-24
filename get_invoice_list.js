@@ -3,28 +3,31 @@
 // Fetches all invoice IDs from Bokio's internal API and stores
 // them in window.__invoiceIds for use by download_pdfs.js.
 //
-// Run this in the browser console at:
-//   https://app.bokio.se/{YOUR-COMPANY-ID}/invoicing/invoices
+// Run order in browser console:
+//   1. config.js          (your company ID and date filter)
+//   2. get_invoice_list.js
+//   3. download_pdfs.js
 
-// ── Edit these ─────────────────────────────────────────────────────────────
-const COMPANY_ID = 'YOUR-COMPANY-ID-HERE'; // e.g. '10bf9ac1-6e34-4b9d-8156-d2b8682245ee'
-const FROM_DATE  = '2024-01-01';            // Only include invoices from this date onwards
-// ───────────────────────────────────────────────────────────────────────────
+if (!window.BOKIO_CONFIG) {
+  throw new Error('Paste config.js in the console first.');
+}
 
-console.log('Fetching invoice list from Bokio...');
+const { companyId, fromDate } = window.BOKIO_CONFIG;
+
+console.log(`Fetching invoices for company ${companyId} from ${fromDate}...`);
 
 const result = await window.bokioProxy.Invoices.InvoiceController.All.Get(
-  COMPANY_ID,
+  companyId,
   { pageIndex: 0, pageSize: 500 }
 );
 
-// Inspect result.Model if field names differ in your Bokio version:
+// Uncomment to inspect the raw response if field names differ:
 // console.log(result.Model.Invoices[0]);
 
 const all = result.Model.Invoices;
 
 window.__invoiceIds = all
-  .filter(inv => inv.Status !== 'Draft' && inv.InvoiceDate >= FROM_DATE)
+  .filter(inv => inv.Status !== 'Draft' && inv.InvoiceDate >= fromDate)
   .map(inv => ({
     id:       inv.Id,
     nr:       inv.InvoiceNumber,
@@ -34,6 +37,6 @@ window.__invoiceIds = all
   }));
 
 const excluded = all.length - window.__invoiceIds.length;
-console.log(`Found ${window.__invoiceIds.length} invoices (${excluded} excluded: drafts or before ${FROM_DATE})`);
+console.log(`Found ${window.__invoiceIds.length} invoices (${excluded} excluded: drafts or before ${fromDate})`);
 console.table(window.__invoiceIds.slice(0, 5));
-console.log('Ready. Run download_pdfs.js to start downloading.');
+console.log('Ready. Paste download_pdfs.js to start downloading.');
