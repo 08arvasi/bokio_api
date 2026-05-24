@@ -12,9 +12,10 @@ if (!window.BOKIO_CONFIG) {
   throw new Error('Paste config.js in the console first.');
 }
 
-const { companyId, fromDate } = window.BOKIO_CONFIG;
+const { companyId, fromDate, toDate } = window.BOKIO_CONFIG;
 
-console.log(`Fetching invoices for company ${companyId} from ${fromDate}...`);
+const rangeLabel = toDate ? `${fromDate} – ${toDate}` : `from ${fromDate}`;
+console.log(`Fetching invoices for company ${companyId} ${rangeLabel}...`);
 
 const result = await window.bokioProxy.Invoices.InvoiceController.All.Get(
   companyId,
@@ -27,7 +28,11 @@ const result = await window.bokioProxy.Invoices.InvoiceController.All.Get(
 const all = result.Model.Invoices;
 
 window.__invoiceIds = all
-  .filter(inv => inv.Status !== 'Draft' && inv.InvoiceDate >= fromDate)
+  .filter(inv =>
+    inv.Status !== 'Draft' &&
+    inv.InvoiceDate >= fromDate &&
+    (!toDate || inv.InvoiceDate <= toDate + 'T23:59:59')
+  )
   .map(inv => ({
     id:       inv.Id,
     nr:       inv.InvoiceNumber,
@@ -37,6 +42,6 @@ window.__invoiceIds = all
   }));
 
 const excluded = all.length - window.__invoiceIds.length;
-console.log(`Found ${window.__invoiceIds.length} invoices (${excluded} excluded: drafts or before ${fromDate})`);
+console.log(`Found ${window.__invoiceIds.length} invoices (${excluded} excluded: drafts or outside ${rangeLabel})`);
 console.table(window.__invoiceIds.slice(0, 5));
 console.log('Ready. Paste download_pdfs.js to start downloading.');
