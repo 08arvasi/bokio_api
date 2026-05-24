@@ -47,7 +47,7 @@ do {
 $filtered = $all | Where-Object {
     $d = $_.invoiceDate
     $status = $_.status
-    $status -eq "published" -and
+    $status -ne "draft" -and $status -ne "credited" -and
     $d -ge $FromDate -and
     ($ToDate -eq "" -or $d -le $ToDate)
 }
